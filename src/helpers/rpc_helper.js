@@ -11,6 +11,83 @@ class ElectroneumRpcHelper
         logger.info('RPC Helper :: Loaded v' + __helper_version);
     }
 
+    /**
+     * Daemon RPC Methods
+     */
+    stopDaemon() {
+        let response = this.jsonRpcRequest({}, "/stop_daemon", 26968);
+        return response;
+    }
+
+    /**
+     * Wallet RPC Methods
+     */
+    getBalance() {
+        let body = {
+            jsonrpc: "2.0",
+            id: "0",
+            method: "getbalance"
+        }
+        let response = this.jsonRpcRequest(body, "/json_rpc", 26970);
+        return response;
+    }
+
+    getAddress() {
+        let body = {
+            jsonrpc: "2.0",
+            id: "0",
+            method: "getaddress"
+        }
+        let response = this.jsonRpcRequest(body, "/json_rpc", 26970);
+        return response;
+    }
+
+    transfer(destinations = [], amount = 0, address = "", paymentId = "", getTxKey = "", priority = 1, doNotRelay = false, getTxHex = "") {
+        let params = {};
+        if(destinations.length > 0) {
+            params.destinations = destinations;
+        } else {
+            params.amount = amount;
+            params.address = address;
+        }
+        params.paymentId = paymentId;
+        params.get_tx_key = getTxKey;
+        params.priority = priority;
+        params.do_not_relay = doNotRelay;
+        params.get_tx_hex = getTxHex;
+
+        let body = {
+            jsonrpc: "2.0",
+            id: "0",
+            method: "transfer",
+            params: params
+        }
+        let response = this.jsonRpcRequest(body, "/json_rpc", 26970);
+        return response;
+    }
+
+    getTransactions(inTxs = true, outTxs = true, pending = true, failed = true, pool = false, filterByHeight = false, minHeight = 0, maxHeight = 0) {
+        let params = {};
+        params.in = inTxs;
+        params.out = outTxs;
+        params.pending = pending;
+        params.failed = failed;
+        params.pool = pool;
+        if(filterByHeight) {
+            params.filter_by_height = filterByHeight,
+            params.min_height = minHeight;
+            params.max_height = maxHeight;
+        }
+        let body = {
+            jsonrpc: "2.0",
+            id: "0",
+            method: "get_transfers",
+            params: params
+        }
+        let response = this.jsonRpcRequest(body, "/json_rpc", 26970);
+        return response;
+    }
+
     createWallet(language, filename) {
         let body = {
             jsonrpc: "2.0",
@@ -35,16 +112,6 @@ class ElectroneumRpcHelper
                 filename: (filename != null) ? filename : "default",
                 password: "password"
             }
-        }
-        let response = this.jsonRpcRequest(body, "/json_rpc", 26970);
-        return response;
-    }
-
-    getBalance() {
-        let body = {
-            jsonrpc: "2.0",
-            id: "0",
-            method: "getbalance",
         }
         let response = this.jsonRpcRequest(body, "/json_rpc", 26970);
         return response;
@@ -84,11 +151,6 @@ class ElectroneumRpcHelper
             params: {}
         }
         let response = this.jsonRpcRequest(body, "/json_rpc", "26970");
-        return response;
-    }
-
-    stopDaemon() {
-        let response = this.jsonRpcRequest({}, "/stop_daemon", 26968);
         return response;
     }
 

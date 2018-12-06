@@ -125,37 +125,37 @@ function startApp() {
     process_helper.startWalletManager()
         .then((res) => {
             let wallet_file = UserWallets.get('wallet_file');
-            // if(wallet_file.name != null && wallet_file.path != null && fs.existsSync(path.join(wallet_file.path, wallet_file.name))) {
-            //     process_helper.portInUse(26970, function(portInUse){
-            //         if(!portInUse) {
-            //             setTimeout(function(){
-            //                 rpc_helper.openWallet(wallet_file.name)
-            //                 .then((resp) => {
-            //                     if(typeof resp.result == "object") {
-            //                         currentWindow.hide();
-            //                         logger.info('Main :: Open main window');
-            //                         openMainWindow();
-            //                     } else {
-            //                         logger.error('Main :: Could not open wallet \'' + wallet_file.name + '\' ' + resp);
-            //                     }
-            //                 });
-            //             }, 1000);
-            //         } else {
-            //             rpc_helper.openWallet(wallet_file.name)
-            //                 .then((resp) => {
-            //                     if(typeof resp.result == "object") {
-            //                         currentWindow.hide();
-            //                         logger.info('Main :: Open main window');
-            //                         openMainWindow();
-            //                     } else {
-            //                         logger.error('Main :: Could not open wallet \'' + wallet_file.name + '\' ' + resp);
-            //                     }
-            //                 });
-            //         }
-            //     });
-            // } else {
+            if(wallet_file.name != null && wallet_file.path != null && fs.existsSync(path.join(wallet_file.path, wallet_file.name))) {
+                process_helper.portInUse(26970, function(portInUse){
+                    if(!portInUse) {
+                        setTimeout(function(){
+                            rpc_helper.openWallet(wallet_file.name)
+                            .then((resp) => {
+                                if(typeof resp.result == "object") {
+                                    currentWindow.hide();
+                                    logger.info('Main :: Open main window');
+                                    openMainWindow();
+                                } else {
+                                    logger.error('Main :: Could not open wallet \'' + wallet_file.name + '\' ' + resp);
+                                }
+                            });
+                        }, 1000);
+                    } else {
+                        rpc_helper.openWallet(wallet_file.name)
+                            .then((resp) => {
+                                if(typeof resp.result == "object") {
+                                    currentWindow.hide();
+                                    logger.info('Main :: Open main window');
+                                    openMainWindow();
+                                } else {
+                                    logger.error('Main :: Could not open wallet \'' + wallet_file.name + '\' ' + resp);
+                                }
+                            });
+                    }
+                });
+            } else {
                 openWizardWindow();
-            // }
+            }
         })
         .catch((err) => {
             logger.error('Main :: Error loading wallet manager ' + err);
@@ -183,6 +183,27 @@ ipcMain.on("create-wallet", (event, arg) => {
             } else {
                 logger.error('Main :: Could not create wallet; Response :: ' + response.result);
             }
+        });
+});
+
+ipcMain.on("update-balance", (event, arg) => {
+    rpc_helper.getBalance()
+        .then((response) => {
+            currentWindow.send("balance-update", response);
+        });
+});
+
+ipcMain.on("get-address", (event, arg) => {
+    rpc_helper.getAddress()
+        .then((response) => {
+            currentWindow.send("wallet-address", response);
+        });
+});
+
+ipcMain.on("get-transactions", (event, arg) => {
+    rpc_helper.getTransactions()
+        .then((response) => {
+            currentWindow.send("latest-transactions", response);
         });
 });
 
