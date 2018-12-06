@@ -33,8 +33,8 @@ The current to-do list is as follows:
     - [X] Start / Stop Daemon
     - [X] Start / Stop Wallet RPC
   - [ ] RPC Manager
-    - [ ] Daemon RPC Commands
-    - [ ] Wallet RPC Commands
+    - [ ] Daemon RPC Commands [#3](https://github.com/crypt0-vault/electroneum-vault/issues/3)
+    - [ ] Wallet RPC Commands [#2](https://github.com/crypt0-vault/electroneum-vault/issues/2)
 - [ ] Main App
   - [ ] Calender Showing ETN Events
   - [ ] Calculator for ETN in different currencies
@@ -43,10 +43,11 @@ The current to-do list is as follows:
     - [ ] Blockchain Stats
     - [ ] Manage Wallets (Multiple)
   - [ ] Wallet
-    - [ ] Balance / Locked Balance
+    - [X] Balance / Locked Balance
     - [ ] Generate Integrated Address
     - [ ] Send / Receive Transactions
     - [ ] Transaction List
+      - [X] Display Transactions
       - [ ] Export Transactions
         - [ ] CSV Format
         - [ ] Excel Format
@@ -57,24 +58,24 @@ The current to-do list is as follows:
   - [X] Settings Page
     - [ ] App
       - [X] Dark Mode
-      - [ ] Debug Mode
+      - [ ] Debug Mode [#4](https://github.com/crypt0-vault/electroneum-vault/issues/4)
       - [ ] Launch on Startup
     - [ ] Daemon
       - [ ] Block Sync Size
       - [ ] Disable Local Daemon (Use Remote)
       - [X] Get Daemon Info
-      - [ ] Log Level (Debug Mode Only)
-      - [ ] Remote Daemon (Only Settable if Local Disabled)
-      - [ ] Restart Daemon (Debug Mode Only)
-      - [ ] View Daemon Log (Debug Mode Only)
+      - [ ] Log Level (Debug Mode Only) [#5](https://github.com/crypt0-vault/electroneum-vault/issues/5)
+      - [ ] Remote Daemon (Only Settable if Local Disabled) [#5](https://github.com/crypt0-vault/electroneum-vault/issues/5)
+      - [ ] Restart Daemon (Debug Mode Only) [#5](https://github.com/crypt0-vault/electroneum-vault/issues/5)
+      - [ ] View Daemon Log (Debug Mode Only) [#5](https://github.com/crypt0-vault/electroneum-vault/issues/5)
     - [ ] Wallet
       - [ ] Change Language
       - [ ] Save Wallet
-      - [ ] View Wallet Keys
+      - [ ] View Wallet Keys [#6](https://github.com/crypt0-vault/electroneum-vault/issues/6)
         - [ ] Mnemonic Seed
         - [ ] Spend Key
         - [ ] View Key
-      - [ ] View Wallet Log (Debug Mode Only)
+      - [ ] View Wallet Log (Debug Mode Only) [#5](https://github.com/crypt0-vault/electroneum-vault/issues/5)
 - [X] Splash Screen
   - [X] Dependency Downloader
 - [ ] Setup Wizard
