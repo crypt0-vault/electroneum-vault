@@ -186,6 +186,12 @@
                 padding: 0px 0px 0px 10px;
                 width: 180px;
             }
+            .tx-in {
+                color: green;
+            }
+            .tx-out {
+                color: red;
+            }
 
             /* Scroll */
             /* Turn on custom 8px wide scrollbar */
@@ -266,6 +272,52 @@
             </div>
             <div class="tab-wallet hidden">
                 <h1 class="tab-title">Wallet</h1>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col s12 card">
+                            <div class="card-content">
+                                <p id="wallet_public_address">Public Wallet Address: <span>Updating ...</span> <a id='wallet_public_address_copy'><i class='fa fa-copy'></i></a></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col s4 card">
+                            <div class="card-content">
+                                <div class="col s7">
+                                    <p>
+                                        Unlocked Balance <i class="fa fa-eye"></i>
+                                    </p>
+                                    <p>
+                                        Balance <i class="fa fa-lock"></i>
+                                    </p>
+                                </div>
+                                <div class="col s5">
+                                    <p id="wallet_unlocked_balance"><span>Updating ...</span> ETN</p>
+                                    <p id="wallet_balance"><span>Updating ...</span> ETN</p>
+                                </div>
+                                <br />
+                                <br />
+                            </div>
+                        </div>
+                        <div class="col s8 card">
+                            <div class="card-content" style="padding: 12px;">
+                                <h5 class="card-title">Transactions</h5>
+                                <table class='striped'>
+                                    <thead>
+                                        <tr>
+                                            <td></td>
+                                            <td>Height</td>
+                                            <td>Hash</td>
+                                            <td>Amount</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="tab-market hidden">
                 <h1 class="tab-title">Market</h1>
@@ -419,25 +471,12 @@
         <script src="../../assets/third-party/materialize/dist/js/materialize.min.js"></script>
         <script src="../../assets/third-party/mustache.js/mustache.min.js"></script>
         <script id="dashboard-tx" type="x-tmpl-mustache">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-7">
-                        <span class="sent">{{ date }}</span>
-                    </div>
-                    <div class="col-1">
-                        <span class="tx-direction"><i class="fa {{#txIn}}fa-arrow-left{{/txIn}}{{#txOut}}fa-arrow-right{{/txOut}}"></i></span>
-                    </div>
-                    <div class="col-4">
-                        <span class="amount">{{ amount }}</span>
-                    </div>
-                </div>
-                <br />
-                <div class="row" style="text-align: center;">
-                    <div class="col">
-                        <span class="wallet-address">{{ walletAddress }}</span>
-                    </div>
-                </div>
-            </div>
+            <tr>
+                <td><i class='fa fa-arrow-{{ txDirection}}'></i></td>
+                <td>{{ txHeight }}</td>
+                <td>{{ txHash }}</td>
+                <td class='tx-{{ direction }}'>{{ directionSymbol}} {{ amount }} ETN</td>
+            </tr>
         </script>
         <script id="news-item" type="x-tmpl-mustache">
             <div class="card col s3">
@@ -455,7 +494,7 @@
         </script>
         <script defer src="../../assets/third-party/font-awesome/svg-with-js/js/fontawesome-all.min.js"></script>
         <script type="text/javascript">
-            const {ipcRenderer} = require('electron');
+            const {clipboard, ipcRenderer} = require('electron');
             const prettyHtml = require('json-pretty-html').default;
             
             $(document).ready(function() {
@@ -489,17 +528,17 @@
                     $(".sync-progress .sync-status").text(status_text);
                 });
 
-                function doTx() {
-                    var dashboardTxTemplate = $('#dashboard-tx').html();
-                    // Mustache.parse(dashboardTxTemplate);
-                    for(var i = 0; i < 10; i++) {
-                        var template = Mustache.render(dashboardTxTemplate, {date: '16:23, 12 dec 2018', txIn: false, txOut: true, amount: '0.73 BTC', walletAddress: '1PRj85hu9RXPZTzxtko9stfs6nRo1vyrQB'})
-                        $('.tab-dashboard .container-fluid .card .card-header').after(template);
-                    }
-                    hideOverlay(500);
-                }
+                // function doTx() {
+                //     var dashboardTxTemplate = $('#dashboard-tx').html();
+                //     // Mustache.parse(dashboardTxTemplate);
+                //     for(var i = 0; i < 10; i++) {
+                //         var template = Mustache.render(dashboardTxTemplate, {date: '16:23, 12 dec 2018', txIn: false, txOut: true, amount: '0.73 BTC', walletAddress: '1PRj85hu9RXPZTzxtko9stfs6nRo1vyrQB'})
+                //         $('.tab-dashboard .container-fluid .card .card-header').after(template);
+                //     }
+                //     hideOverlay(500);
+                // }
                 
-                if(currentPage == "dashboard") { doTx(); }
+                // if(currentPage == "dashboard") { doTx(); }
 
                 // dashboard is selected by default, if the page is reloaded with a different doc hash then update it on the html
                 hideCurrentTab();
@@ -540,7 +579,11 @@
 
                     switch(tabId) {
                         case 'dashboard':
-                            doTx();
+                            // doTx();
+                            hideOverlay();
+                            break;
+                        case 'wallet':
+                            getWallet();
                             break;
                         case 'news':
                             fetchLatestNews();
@@ -552,6 +595,66 @@
                             hideOverlay();
                             break;
                     }
+                }
+
+                function getWallet() {
+                    ipcRenderer.send('update-balance');
+                    ipcRenderer.send('get-address');
+                    ipcRenderer.send('get-transactions');
+                    ipcRenderer.on('balance-update', function(event, arg) {
+                        $("#wallet_unlocked_balance span").text((arg.result.unlocked_balance.toFixed(2).toString() / 100));
+                        $("#wallet_balance span").text((arg.result.balance.toFixed(2).toString() / 100));
+                    });
+                    ipcRenderer.on('wallet-address', function(event, arg) {
+                        $("#wallet_public_address span").text(arg.result.address);
+                        $("#wallet_public_address_copy").on("click", function() {
+                            clipboard.writeText(arg.result.address);
+                            M.toast({html: 'Copied to clipboard'});
+                        });
+                    });
+                    ipcRenderer.on('latest-transactions', function(event, arg) {
+                        var txTemplate = $('#dashboard-tx').html();
+                        var txList = [];
+                        if(arg.result.in != undefined && arg.result.in.length > 0) {
+                            for(var i = 0; i < arg.result.in.length; i++) {
+                                arg.result.in[i].type = "in";
+                                if(txList[arg.result.in[i].height] != undefined) {
+                                    txList[arg.result.in[i].height].push(arg.result.in[i]);
+                                } else {
+                                    txList[arg.result.in[i].height] = [];
+                                    txList[arg.result.in[i].height].push(arg.result.in[i]);
+                                }
+                            }
+                        }
+                        if(arg.result.out != undefined && arg.result.out.length > 0) {
+                            for(var i =0; i < arg.result.out.length; i++) {
+                                arg.result.out[i].type = "out";
+                                if(txList[arg.result.out[i].height] != undefined) {
+                                    txList[arg.result.out[i].height].push(arg.result.out[i]);
+                                } else {
+                                    txList[arg.result.out[i].height] = [];
+                                    txList[arg.result.out[i].height].push(arg.result.out[i]);
+                                }
+                            }
+                        }
+                        if(txList.length > 0) {
+                            var blocks = Object.keys(txList).reverse();
+                            for(var a = 0;a < blocks.length; a++) {
+                                for(var b = 0;b < txList[blocks[i]].length; b++) {
+                                    if(txList[blocks[a]][b].type == "in") {
+                                        var template = Mustache.render(txTemplate, {txDirection: 'left', txHeight: txList[blocks[a]][b].height, txHash: txList[blocks[a]][b].txid, direction: 'in', directionSymbol: '+', amount: (txList[blocks[a]][b].amount / 100)});
+                                        $('.tab-wallet table tbody').append(template);
+                                    } else if(txList[blocks[a]][b].type == "out") {
+                                        var template = Mustache.render(txTemplate, {txDirection: 'right', txHeight: txList[blocks[a]][b].height, txHash: txList[blocks[a]][b].txid, direction: 'out', directionSymbol: '-', amount: (txList[blocks[a]][b].amount / 100)});
+                                        $('.tab-wallet table tbody').append(template);
+                                    }
+                                }
+                            }
+                        } else {
+                            $('.tab-wallet table tbody').append("<tr><td style='text-align: center' colspan='4'>No transactions found</td></tr>");
+                        }
+                    });
+                    hideOverlay();
                 }
 
                 function fetchLatestNews() {
