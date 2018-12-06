@@ -1,0 +1,20 @@
+[submodule "src/assets/third-party/bootstrap"]
+	path = src/assets/third-party/bootstrap
+	url = https://github.com/twbs/bootstrap
+	branch = v4-dev
+[submodule "src/assets/third-party/font-awesome"]
+	path = src/assets/third-party/font-awesome
+	url = https://github.com/FortAwesome/Font-Awesome
+	branch = master
+[submodule "src/assets/third-party/flag-icon-css"]
+	path = src/assets/third-party/flag-icon-css
+	url = https://github.com/lipis/flag-icon-css
+	branch = master
+[submodule "src/assets/third-party/materialize"]
+	path = src/assets/third-party/materialize
+	url = https://github.com/Dogfalo/materialize
+	branch = v1-dev
+[submodule "src/assets/third-party/mustache.js"]
+	path = src/assets/third-party/mustache.js
+	url = https://github.com/janl/mustache.js
+	branch = master

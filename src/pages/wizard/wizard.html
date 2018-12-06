@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="../../assets/third-party/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../assets/third-party/flag-icon-css/css/flag-icon.min.css" rel="stylesheet">
+        <!-- <link href="../../assets/css/app.css" rel="stylesheet"> -->
+        <style type="text/css">
+            body {
+                overflow: hidden;
+                text-align: center;
+            }
+            #min-btn, #max-btn, #close-btn {
+                border: none !important;
+                border-radius: 0px;
+                box-shadow: none;
+                background-color: silver;
+            }
+            img:hover {
+                border: black solid 3px;
+                border-radius: 50px;
+            }
+            .content div.row {
+                position: absolute;
+                float: left;
+            }
+            .content div.row .col-xs-12 {
+                margin-bottom: 10px;
+            }
+            .hidden {
+                display: none;
+            }
+            .step-1 h3, .step-2 h3 {
+                padding: 20px 0px 30px;
+            }
+            #wallet-languages .col-xs, #action-buttons .col-xs {
+                margin-top: -20px;
+            }
+            /* .step-2 .row .col-xs:first-child {
+                margin-top: -20px;
+            } */
+            /* .step-2 .row .col-xs {
+                margin-top: -10px;
+            } */
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="content">
+                <div class="active step-1">
+                    <h3>Choose Language</h3>
+                    <div id="wallet-languages">
+                    </div>
+                </div>
+                <div class="hidden step-2">
+                    <h3>Create / Import a Wallet</h3>
+                    <div id="action-buttons">
+                        <div class="col-xs">
+                            <p class='btn btn-outline-primary' id="btn_create" onclick="createNewWallet()"><i class="fa fa-plus"></i> Create Wallet</button>
+                        </div>
+                        <br />
+                        <div class="col-xs">
+                            <p class="btn btn-outline-primary disabled" id="btn_import_offline" onclick="importOfflineWallet()"><i class="fa fa-atlas"></i> Import Offline Wallet</button>
+                        </div>
+                        <br />
+                        <div class="col-xs">
+                            <p class="btn btn-outline-primary disabled" id="btn_import_from_seed" onclick="importWalletFromSeed()"><i class="fa fa-atlas"></i> Restore Deterministic Wallet</button>
+                        </div>
+                        <br />
+                        <div class="col-xs">
+                            <p class="btn btn-outline-primary disabled" id="btn_open_existing" onclick="openExistingWallet()"><i class="fa fa-file-import"></i> Open Existing Wallet</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-1.9.1.js"></script>
+        <script src="../../assets/third-party/font-awesome/svg-with-js/js/fontawesome-all.min.js"></script>
+        <script type="text/javascript" src="../../assets/third-party/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="../../assets/third-party/mustache.js/mustache.min.js"></script>
+        <script>
+            const {ipcRenderer} = require('electron');
+
+            let selectedLang = {};
+            let walletLanguages = [
+                {
+                    countryCode: "de",
+                    lang: "Deutsch",
+                    // flag: "../../assets/icons/flags/de.png"
+                },
+                {
+                    countryCode: "gb",
+                    lang: "English",
+                    // flag: "../../assets/icons/flags/gb.png"
+                },
+                {
+                    countryCode: "es",
+                    lang: "Español",
+                    // flag: "../../assets/icons/flags/es.png"
+                },
+                {
+                    countryCode: "fr",
+                    lang: "Français",
+                    // flag: "../../assets/icons/flags/fr.png"
+                },
+                {
+                    countryCode: "it",
+                    lang: "Italiano",
+                    // flag: "../../assets/icons/flags/it.png"
+                },
+                {
+                    countryCode: "nl",
+                    lang: "Nederlands",
+                    // flag: "../../assets/icons/flags/nl.png"
+                },
+                {
+                    countryCode: "pt",
+                    lang: "Português",
+                    // flag: "../../assets/icons/flags/pt.png"
+                },
+                {
+                    countryCode: "ru",
+                    lang: "русский язык",
+                    // flag: "../../assets/icons/flags/ru.png"
+                },
+                {
+                    countryCode: "jp",
+                    lang: "日本語",
+                    // flag: "../../assets/icons/flags/jp.png"
+                },
+                {
+                    countryCode: "cn",
+                    lang: "简体中文 (中国)",
+                    // flag: "../../assets/icons/flags/cn.png"
+                }
+                // {
+                //     countryCode: "eo",
+                //     lang: "Esperanto",
+                //     // flag: "../../assets/icons/flags/esperanto.png"
+                // }
+            ];
+            
+            $(function(){
+                for(var i in walletLanguages) {
+                    $("#wallet-languages").append("<div class='col-xs'><p class='btn btn-outline-primary' data-countryCode='" + walletLanguages[i].countryCode + "' data-lang='" + walletLanguages[i].lang + "'><span class='flag-icon flag-icon-" + walletLanguages[i].countryCode + "'></span> " + walletLanguages[i].lang + "</p></div><br />");
+                }
+
+                $('#wallet-languages .btn').on('click', function(){
+                    selectedLang = {countryCode: $(this).data('countryCode'), lang: $(this).data('lang')};
+                    $('.step-1').removeClass('active').addClass('hidden');
+                    $('.step-2').removeClass('hidden').addClass('active');
+                    window.resizeTo(500, 300);
+                });
+            });
+
+            function createNewWallet() {
+                console.log("create wallet");
+                ipcRenderer.send("create-wallet", selectedLang);
+            }
+
+            function importOfflineWallet() {
+                console.log("import offline wallet");
+            }
+
+            function importWalletFromSeed() {
+                console.log("import wallet from seed");
+            }
+
+            function openExistingWallet() {
+                console.log("open existing wallet");
+            }
+        </script>
+    </body>
+</html>

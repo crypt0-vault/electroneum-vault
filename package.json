@@ -1,0 +1,41 @@
+{
+  "name": "electroneum-vault",
+  "version": "0.0.1",
+  "description": "Electroneum GUI made with Electron JS",
+  "homepage": "https://github.com/crypt0-vault/electroneum-vault",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crypt0-vault/electroneum-vault.git"
+  },
+  "author": {
+    "name": "r00tus3r",
+    "email": "r00tus3r.90@gmail.com"
+  },
+  "keywords": [],
+  "main": "src/app.js",
+  "private": true,
+  "scripts": {
+    "dev": "electron . --dev",
+    "lint": "eslint",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "decompress": "^4.2.0",
+    "electron-compile": "^6.4.3",
+    "electron-dl": "^1.12.0",
+    "electron-log": "^2.2.17",
+    "fs": "0.0.1-security",
+    "get-json": "^1.0.1",
+    "http": "0.0.0",
+    "json-pretty-html": "^1.2.0",
+    "net": "^1.0.2",
+    "octonode": "^0.9.5"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "eslint": "^5.9.0"
+  }
+}
