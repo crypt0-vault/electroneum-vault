@@ -91,7 +91,7 @@ The current to-do list is as follows:
 Anybody can clone and run the app on their local machine. You'll need to have Node & Git installed to get started.
 
 Firstly, clone the repo
-> ```git clone https://github.com/crypt0-vault/electroneum-vault```
+> ```git clone --recursive https://github.com/crypt0-vault/electroneum-vault```
 
 Open the directory and install the dependencies
 > ```cd electroneum-vault && npm install```
