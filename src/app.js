@@ -23,7 +23,8 @@ const UserPreferences = new LocalStorageHelper(
                 "--block-sync-size=10",
                 "--p2p-bind-port=26967",
                 "--rpc-bind-port=26968"
-            ]
+            ],
+            debugMode: false
         }
     }
 );
@@ -205,6 +206,16 @@ ipcMain.on("get-transactions", (event, arg) => {
         .then((response) => {
             currentWindow.send("latest-transactions", response);
         });
+});
+
+ipcMain.on("set-user-preference", (event, arg) => {
+    UserPreferences.set(Object.keys(arg)[0], Object.values(arg)[0]);
+});
+
+ipcMain.on("get-config", (event, arg) => {
+    console.log("send config to current Window")
+    console.log("path " + UserPreferences.getJsonPath());
+    currentWindow.send("config-location", UserPreferences.getJsonPath());
 });
 
 function openMainWindow() {

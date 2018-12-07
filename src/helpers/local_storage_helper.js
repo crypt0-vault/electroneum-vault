@@ -14,6 +14,10 @@ class LocalStorageHelper {
     this.path = path.join(userDataPath, opts.configName + '.json');
     this.data = parseDataFile(this.path, opts.defaults);
   }
+
+  getJsonPath() {
+    return this.path;
+  }
   
   // This will just return the property on the `data` object
   get(key) {
