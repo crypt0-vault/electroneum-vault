@@ -95,18 +95,20 @@ class ElectroneumProcessHelper {
     /**
      * Start the electroneum wallet manager - allows creation of wallets
      */
-    startWalletManager() {
+    startWalletManager(walletManagerParameters = [], walletDir) {
         return new Promise((resolve, reject) => {
             this.portInUse(26970, function(portInUse) {
                 if(!portInUse) {
+                    
                     // check wallet folder exists
-                    let walletDir = path.join((electron.app || electron.remote.app).getPath('userData'), 'wallets');
                     if(!fs.existsSync(walletDir)) {
                         fs.mkdirSync(walletDir);
                     }
+
+                    logger.info('Wallet Manager :: Starting wallet manager with the following parameteres ' + walletManagerParameters)
                     
                     currentWindow.send("display-splash-message", "Starting electroneum wallet manager ...");
-                    const proc = spawn(path.join(appDir, 'bin/', electroneumTag, 'electroneum-wallet-rpc'), ['--rpc-bind-port=26970', '--wallet-dir='+walletDir, '--disable-rpc-login']);
+                    const proc = spawn(path.join(appDir, 'bin/', electroneumTag, 'electroneum-wallet-rpc'), walletManagerParameters);
                 
                     let _this = this;
 
@@ -123,7 +125,7 @@ class ElectroneumProcessHelper {
                     });
 
                     proc.stderr.on('data', data => {
-                        logger.error('Error :: Wallet Manager ' + error.toString('utf8'));
+                        logger.error('Error :: Wallet Manager ' + data.toString('utf8'));
                         reject(error.toString('utf8'));
                     });
                 } else {
