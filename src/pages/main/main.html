@@ -421,8 +421,8 @@
                                     <button class="btn btn-primary disabled" data-target="modal-settings" id="get_daemon_info"><i class="fa fa-eye"></i> Get daemon info</button>
                                 </div>
                                 <div class="row debug-option hidden">
-                                    <button class="btn btn-danger"><i class="fa fa-power-off"></i> Restart Daemon</button>
-                                    <button class="btn btn-primary"><i class="fa fa-folder-open"></i> View Log</button>
+                                    <button class="btn btn-danger restart-daemon"><i class="fa fa-power-off"></i> Restart Daemon</button>
+                                    <button class="btn btn-primary disabled"><i class="fa fa-folder-open"></i> View Log</button>
                                 </div>
                             </div>
                         </div>
@@ -442,7 +442,7 @@
                                 </div>
                                 <div class="row">
                                     <button class="btn btn-primary disabled"><i class="fa fa-save"></i> Save Wallet</button>
-                                    <button class="btn btn-primary debug-option hidden"><i class="fa fa-folder-open"></i> View Log</button>
+                                    <button class="btn btn-primary debug-option disabled hidden"><i class="fa fa-folder-open"></i> View Log</button>
                                 </div>
                             </div>
                         </div>
@@ -529,11 +529,35 @@
             
             $(document).ready(function() {;
                 var configLocation;
+                var userPreferences;
                 currentPage = document.location.hash;
                 currentPage = currentPage.replace('#', '');
                 if(currentPage == "") { document.location.href="#dashboard"; currentPage = "dashboard"; }
                 latestDaemonResponse = "";
             
+                ipcRenderer.send("get-config");
+                ipcRenderer.on("config-location", (event, arg) => {
+                    configLocation = arg;
+                    $.ajax({
+                        url:'file://'+configLocation,
+                        method:'get',
+                        dataType:'json',
+                        success: function(a) {
+                            if(a.darkMode) {
+                                $(".dark-mode-toggle input[type='checkbox']").prop('checked', true);
+                                $(document.body).toggleClass('dark light');
+                            }
+                            if(a.debugMode) {
+                                $(".debug-mode-toggle input[type='checkbox']").prop('checked', true);
+                                $(".debug-option").toggleClass("hidden");
+                            }
+                            if(a.daemonParameters.indexOf("--testnet") != -1) {
+                                $(".testnet-toggle input[type='checkbox']").prop('checked', true);
+                            }
+                        }
+                    });
+                });
+
                 $(".dark-mode-toggle input[type='checkbox']").on('change', function() {
                     $(document.body).toggleClass('dark light');
                     ipcRenderer.send("set-user-preference", {darkMode: $(".dark-mode-toggle input[type='checkbox']").is(':checked')});
@@ -544,27 +568,13 @@
                     ipcRenderer.send("set-user-preference", {debugMode: $(".debug-mode-toggle input[type='checkbox']").is(':checked')});
                 });
 
-                ipcRenderer.send("get-config");
-                ipcRenderer.on("config-location", (event, arg) => {
-                    configLocation = arg;
-                    $.ajax({
-                        url:'file://'+configLocation,
-                        method:'get',
-                        dataType:'json',
-                        success: function(a) {
-                            if(a.darkMode) {
-                                $(".dark-mode-toggle input[type='checkbox']").attr('checked', true);
-                                $(".dark-mode-toggle input[type='checkbox']").trigger('change');
-                            }
-                            if(a.debugMode) {
-                                $(".debug-mode-toggle input[type='checkbox']").attr('checked', true);
-                                $(".debug-mode-toggle input[type='checkbox']").trigger('change');
-                            }
-                        }
-                    });
+                $(".testnet-toggle input[type='checkbox']").on('change', function() {
+                    ipcRenderer.send("toggle-testnet", $(".testnet-toggle input[type='checkbox']").is(':checked'));
                 });
 
                 ipcRenderer.on("daemon-info", function(event, arg) {
+                    var instance = M.Modal.getInstance(document.getElementById("modal-settings"));
+                    instance.close();
                     if($("#get_daemon_info").hasClass("disabled")) {
                         $("#get_daemon_info").removeClass("disabled");
                     }
@@ -588,6 +598,15 @@
                     }
                     $(".sync-progress .sync-status").text(status_text);
                 });
+
+                $(".restart-daemon").on("click", function() {
+                    ipcRenderer.send("restart-daemon");
+                    $("#modal-settings h4").text("Restarting Daemon");
+                    $("#modal-settings p").addClass("center");
+                    $("#modal-settings p").html('<div class="preloader-wrapper big active"> <div class="spinner-layer spinner-blue"> <div class="circle-clipper left"> <div class="circle"></div></div><div class="gap-patch"> <div class="circle"></div></div><div class="circle-clipper right"> <div class="circle"></div></div></div><div class="spinner-layer spinner-red"> <div class="circle-clipper left"> <div class="circle"></div></div><div class="gap-patch"> <div class="circle"></div></div><div class="circle-clipper right"> <div class="circle"></div></div></div><div class="spinner-layer spinner-yellow"> <div class="circle-clipper left"> <div class="circle"></div></div><div class="gap-patch"> <div class="circle"></div></div><div class="circle-clipper right"> <div class="circle"></div></div></div><div class="spinner-layer spinner-green"> <div class="circle-clipper left"> <div class="circle"></div></div><div class="gap-patch"> <div class="circle"></div></div><div class="circle-clipper right"> <div class="circle"></div></div></div></div>');
+                    var instance = M.Modal.getInstance(document.getElementById("modal-settings"));
+                    instance.open();
+                })
 
                 // function doTx() {
                 //     var dashboardTxTemplate = $('#dashboard-tx').html();
@@ -701,7 +720,7 @@
                         if(txList.length > 0) {
                             var blocks = Object.keys(txList).reverse();
                             for(var a = 0;a < blocks.length; a++) {
-                                for(var b = 0;b < txList[blocks[i]].length; b++) {
+                                for(var b = 0;b < txList[blocks[a]].length; b++) {
                                     if(txList[blocks[a]][b].type == "in") {
                                         var template = Mustache.render(txTemplate, {txDirection: 'left', txHeight: txList[blocks[a]][b].height, txHash: txList[blocks[a]][b].txid, direction: 'in', directionSymbol: '+', amount: (txList[blocks[a]][b].amount / 100)});
                                         $('.tab-wallet table tbody').append(template);
@@ -753,6 +772,7 @@
                         $("#get_daemon_info").on("click", function(){
                             $("#modal-settings h4").text("Daemon Info");
                             $("#modal-settings p").html(prettyHtml(latestDaemonResponse));
+                            $("#modal-settings").css("height", "25%");
                             var instance = M.Modal.getInstance(document.getElementById("modal-settings"));
                             instance.open();
                         });

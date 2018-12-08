@@ -4,6 +4,7 @@ const {app, BrowserWindow, ipcMain} = electron;
 const fs = require('fs');
 const logger = require('electron-log');
 const path = require('path');
+const os = require('os');
 const url = require('url');
 
 // Helpers
@@ -20,11 +21,19 @@ const UserPreferences = new LocalStorageHelper(
             darkMode: false,
             daemonParameters: [
                 "--log-level=0",
-                "--block-sync-size=10",
-                "--p2p-bind-port=26967",
-                "--rpc-bind-port=26968"
+                "--block-sync-size=10"
             ],
-            debugMode: false
+            debugMode: false,
+            testnet: false,
+            walletDirs: {
+                mainnet: path.join((electron.app || electron.remote.app).getPath('userData'), 'wallets'),
+                testnet: path.join((electron.app || electron.remote.app).getPath('userData'), 'wallets', 'testnet')
+            },
+            walletManagerParameters: [
+                '--rpc-bind-port=26970',
+                '--disable-rpc-login',
+                '--wallet-dir=' + path.join((electron.app || electron.remote.app).getPath('userData'), 'wallets')
+            ]
         }
     }
 );
@@ -123,10 +132,11 @@ function startApp() {
     // openMainWindow();
     // return true;
     // does not require the daemon to be running right away
-    process_helper.startWalletManager()
+    process_helper.startWalletManager(UserPreferences.get("walletManagerParameters"), ((UserPreferences.get("testnet")) ? UserPreferences.get("walletDirs").testnet : UserPreferences.get("walletDirs").mainnet))
         .then((res) => {
             let wallet_file = UserWallets.get('wallet_file');
-            if(wallet_file.name != null && wallet_file.path != null && fs.existsSync(path.join(wallet_file.path, wallet_file.name))) {
+            isTestnet = (UserPreferences.get("daemonParameters").indexOf("--testnet") != -1);
+            if(wallet_file.name != null && wallet_file.path != null && ((!isTestnet) ? fs.existsSync(path.join(wallet_file.path, wallet_file.name)) : fs.existsSync(path.join(wallet_file.path, "testnet", wallet_file.name)))) {
                 process_helper.portInUse(26970, function(portInUse){
                     if(!portInUse) {
                         setTimeout(function(){
@@ -218,9 +228,76 @@ ipcMain.on("get-config", (event, arg) => {
     currentWindow.send("config-location", UserPreferences.getJsonPath());
 });
 
+ipcMain.on("toggle-testnet", (event, arg) => {
+    let daemonParameters = UserPreferences.get("daemonParameters");
+    let walletDirs = UserPreferences.get("walletDirs");
+    let walletManagerParameters = UserPreferences.get("walletManagerParameters");
+    console.log("before change :: ", daemonParameters, walletManagerParameters);
+    // if toggling on, use mainnet else use testnet to find the current index
+    let index = walletManagerParameters.indexOf("--wallet-dir="+walletDirs.mainnet);
+    let indexTestnet = walletManagerParameters.indexOf("--wallet-dir="+walletDirs.testnet);
+    console.log('arg equals ' + arg);
+    if(arg) {
+        // Enable testnet
+        if(daemonParameters.indexOf("--testnet") == -1) {
+            daemonParameters.push("--testnet");
+        }
+        if(walletManagerParameters.indexOf("--testnet") == -1) {
+            walletManagerParameters.push("--testnet");
+        }
+        if(walletManagerParameters[index] != "--wallet-dir="+walletDirs.testnet) {
+            walletManagerParameters[index] = "--wallet-dir="+walletDirs.testnet;
+        }
+    } else {
+        // Disable testnet
+        if(daemonParameters.indexOf("--testnet") != -1) {
+            console.log("remove testnet from daemon params");
+            daemonParameters.pop(daemonParameters.indexOf("--testnet"));
+        } else {
+            console.log("param not in daemon params " + daemonParameters);
+        }
+        if(walletManagerParameters.indexOf("--testnet") != -1) {
+            console.log("remove testnet from wallet manager params");
+            walletManagerParameters.pop(walletManagerParameters.indexOf("--testnet"));
+        } else {
+            console.log("param not in wallet manager params " + walletManagerParameters);
+        }
+        walletManagerParameters[indexTestnet] = "--wallet-dir="+walletDirs.mainnet;
+    }
+    UserPreferences.set("daemonParameters", daemonParameters);
+    UserPreferences.set("walletManagerParameters", walletManagerParameters);
+    UserPreferences.set("testnet", arg);
+    console.log("after change :: ", daemonParameters, walletManagerParameters);
+    stopGetDaemonInfoInterval();
+    rpc_helper.stopDaemon();
+    rpc_helper.closeWallet();
+    currentWindow.close();
+    process_helper.startDaemon(UserPreferences.get("daemonParameters"));
+    process_helper.startWalletManager(UserPreferences.get("walletManagerParameters"), ((arg) ? walletDirs.testnet : walletDirs.testnet));
+    startGetDaemonInfoInterval();
+
+    let wallet_file = UserWallets.get("wallet_file");
+    // Check file exists
+    if(wallet_file.name != null && fs.existsSync(path.join(((arg) ? walletDirs.testnet : walletDirs.mainnet), wallet_file.name))) {
+        rpc_helper.openWallet(wallet_file.name);
+        openMainWindow();
+    } else {
+        openWizardWindow();
+    }
+});
+
+ipcMain.on("restart-daemon", (event, arg) => {
+    stopGetDaemonInfoInterval();
+    rpc_helper.stopDaemon();
+    process_helper.startDaemon(UserPreferences.get("daemonParameters"));
+    startGetDaemonInfoInterval();
+});
+
 function openMainWindow() {
+    let windowHeight;
     startGetDaemonInfoInterval(); // Trigger the daemonGetInfoInterval
-    currentWindow = mainWindow = new BrowserWindow({height: 843, icon: icon, resizable: false, width: 1400});
+    if(os.platform() == "win32") { windowHeight = 870 } else { windowHeight = 843}
+    currentWindow = mainWindow = new BrowserWindow({height: windowHeight, icon: icon, resizable: false, width: 1400});
     // splashWindow.hide();
     mainWindow.loadURL(url.format({
         pathname: path.join(__dirname, 'pages/main/main.html'),
